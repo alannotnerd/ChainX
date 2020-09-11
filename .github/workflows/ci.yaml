@@ -65,4 +65,4 @@ jobs:
     - name: Compile
       run: |
         cargo build --release
-        sha256 target/release/wbuild/chainx-runtime/chainx_runtime.compact.wasm
+        sha256sum target/release/wbuild/chainx-runtime/chainx_runtime.compact.wasm
