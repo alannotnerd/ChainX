@@ -63,4 +63,6 @@ jobs:
       run: cargo test --workspace --exclude xpallet-contracts
 
     - name: Compile
-      run: cargo test --no-run
+      run: |
+        cargo build --release
+        sha256 target/release/wbuild/chainx-runtime/chainx_runtime.compact.wasm
