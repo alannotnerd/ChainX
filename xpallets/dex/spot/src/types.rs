@@ -401,6 +401,7 @@ pub struct OrderExecutedInfo<AccountId, Balance, BlockNumber, Price> {
     taker: AccountId,
     maker_order_id: OrderId,
     taker_order_id: OrderId,
+    /// measured by **base** currency.
     turnover: Balance,
     executed_at: BlockNumber,
 }

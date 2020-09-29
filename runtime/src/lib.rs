@@ -10,6 +10,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+#![allow(clippy::identity_op)]
+
 use codec::Encode;
 
 use static_assertions::const_assert;
@@ -123,15 +125,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
 };
-
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
-
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
-
-// These time units are defined in number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -328,8 +321,8 @@ impl pallet_grandpa::Trait for Runtime {
 }
 
 parameter_types! {
-    pub WindowSize: BlockNumber = pallet_finality_tracker::DEFAULT_WINDOW_SIZE.into();
-    pub ReportLatency: BlockNumber = pallet_finality_tracker::DEFAULT_REPORT_LATENCY.into();
+    pub WindowSize: BlockNumber = pallet_finality_tracker::DEFAULT_WINDOW_SIZE;
+    pub ReportLatency: BlockNumber = pallet_finality_tracker::DEFAULT_REPORT_LATENCY;
 }
 
 impl pallet_finality_tracker::Trait for Runtime {
@@ -340,7 +333,7 @@ impl pallet_finality_tracker::Trait for Runtime {
 
 parameter_types! {
     pub const Offset: BlockNumber = 0;
-    /// Session length.
+    /// Session length, 50 * 6s = 5 min per session.
     pub const Period: BlockNumber = 50;
     pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(17);
 }
@@ -465,7 +458,7 @@ where
         let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
         let address = Indices::unlookup(account);
         let (call, extra, _) = raw_payload.deconstruct();
-        Some((call, (address, signature.into(), extra)))
+        Some((call, (address, signature, extra)))
     }
 }
 
@@ -524,13 +517,13 @@ impl pallet_sudo::Trait for Runtime {
 }
 
 parameter_types! {
-    pub const LaunchPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
-    pub const VotingPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
-    pub const FastTrackVotingPeriod: BlockNumber = 3 * 24 * 60 * MINUTES;
+    pub const LaunchPeriod: BlockNumber = 28 * DAYS;
+    pub const VotingPeriod: BlockNumber = 28 * DAYS;
+    pub const FastTrackVotingPeriod: BlockNumber = 3 * DAYS;
     pub const InstantAllowed: bool = true;
     pub const MinimumDeposit: Balance = 100 * DOLLARS;
-    pub const EnactmentPeriod: BlockNumber = 30 * 24 * 60 * MINUTES;
-    pub const CooloffPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
+    pub const EnactmentPeriod: BlockNumber = 30 * DAYS;
+    pub const CooloffPeriod: BlockNumber = 28 * DAYS;
     // One cent: $10,000 / MB
     pub const PreimageByteDeposit: Balance = 1 * CENTS;
     pub const MaxVotes: u32 = 100;
@@ -691,8 +684,8 @@ impl pallet_treasury::Trait for Runtime {
     type ProposalBond = ProposalBond;
     type ProposalBondMinimum = ProposalBondMinimum;
     type SpendPeriod = SpendPeriod;
-    type Burn = Burn;
-    type BurnDestination = (); // todo maybe we should define it?
+    type Burn = ();
+    type BurnDestination = ();
     type WeightInfo = ();
 }
 
