@@ -20,7 +20,7 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{
     crypto::KeyTypeId,
-    u32_trait::{_1, _2, _3, _4},
+    u32_trait::{_1, _2, _3, _4, _5},
     OpaqueMetadata,
 };
 #[cfg(feature = "runtime-benchmarks")]
@@ -667,12 +667,12 @@ impl pallet_treasury::Trait for Runtime {
     type ApproveOrigin = EnsureOneOf<
         AccountId,
         EnsureRoot<AccountId>,
-        pallet_collective::EnsureMembers<_4, AccountId, CouncilCollective>,
+        pallet_collective::EnsureMembers<_3, _5, AccountId, CouncilCollective>,
     >;
     type RejectOrigin = EnsureOneOf<
         AccountId,
         EnsureRoot<AccountId>,
-        pallet_collective::EnsureMembers<_2, AccountId, CouncilCollective>,
+        pallet_collective::EnsureMembers<_1, _2, AccountId, CouncilCollective>,
     >;
     type Tippers = Elections;
     type TipCountdown = TipCountdown;
