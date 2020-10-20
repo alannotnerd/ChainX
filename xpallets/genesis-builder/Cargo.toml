@@ -28,6 +28,15 @@ xpallet-mining-asset = { path  = "../mining/asset", default-features = false }
 xpallet-mining-staking = { path  = "../mining/staking", default-features = false }
 xpallet-support = { path = "../support", default-features = false }
 
+[dev-dependencies]
+env_logger = "0.7.1"
+sp-core = "2.0.0"
+sp-io = "2.0.0"
+xp-mining-common = { path = "../../primitives/mining/common" }
+xp-mining-staking = { path = "../../primitives/mining/staking" }
+pallet-session = "2.0.0"
+pallet-timestamp = "2.0.0"
+
 [features]
 default = ["std"]
 std = [
