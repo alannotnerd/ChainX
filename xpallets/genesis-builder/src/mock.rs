@@ -1,20 +1,17 @@
 // Copyright 2019-2020 ChainX Project Authors. Licensed under GPL-3.0.
 
+use crate::Trait;
 use crate::*;
-use crate::{Module, Trait};
 use chainx_primitives::{AccountId, AccountIndex, AssetId, Balance};
-use frame_support::{
-    impl_outer_event, impl_outer_origin, parameter_types, traits::Get, weights::Weight,
-};
+use frame_support::{impl_outer_origin, parameter_types, traits::Get, weights::Weight};
 use sp_core::H256;
 use sp_runtime::{
     testing::{Header, UintAuthorityId},
-    traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
-    MultiSignature, Perbill,
+    traits::{BlakeTwo256, IdentityLookup},
+    Perbill,
 };
 use std::{cell::RefCell, collections::HashSet};
 use xp_mining_staking::SessionIndex;
-use xpallet_support::traits::TreasuryAccount;
 
 pub const INIT_TIMESTAMP: u64 = 30_000;
 
@@ -105,17 +102,14 @@ impl pallet_session::OneSessionHandler<AccountId> for OtherSessionHandler {
     {
     }
 
-    fn on_new_session<'a, I: 'a>(_: bool, validators: I, _: I)
+    fn on_new_session<'a, I: 'a>(_: bool, _validators: I, _: I)
     where
         I: Iterator<Item = (&'a AccountId, Self::Key)>,
         AccountId: 'a,
     {
-        SESSION.with(|x| {
-            *x.borrow_mut() = (validators.map(|x| x.0.clone()).collect(), HashSet::new())
-        });
     }
 
-    fn on_disabled(validator_index: usize) {}
+    fn on_disabled(_validator_index: usize) {}
 }
 
 impl sp_runtime::BoundToRuntimeAppPublic for OtherSessionHandler {
@@ -152,14 +146,6 @@ impl pallet_session::Trait for Test {
     type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
     type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
     type WeightInfo = ();
-}
-
-pub struct DummyTreasuryAccount;
-
-impl TreasuryAccount<AccountId> for DummyTreasuryAccount {
-    fn treasury_account() -> AccountId {
-        todo!()
-    }
 }
 
 parameter_types! {
@@ -224,20 +210,22 @@ thread_local! {
     static MAX_ITERATIONS: RefCell<u32> = RefCell::new(0);
 }
 
-pub struct ExtBuilder {
-    session_length: BlockNumber,
-    election_lookahead: BlockNumber,
-    session_per_era: SessionIndex,
-}
+#[derive(Default)]
+pub struct ExtBuilder;
 
-impl Default for ExtBuilder {
-    fn default() -> Self {
-        Self {
-            session_length: 1,
-            election_lookahead: 0,
-            session_per_era: 3,
-        }
-    }
+pub(crate) fn get_accounts() -> Vec<AccountId> {
+    let params: xp_genesis_builder::AllParams<AccountId, Balance, Balance, Balance> =
+        serde_json::from_str(include_str!(
+            "../../../cli/src/res/genesis_builder_params.json"
+        ))
+        .expect("JSON was not well-formatted");
+
+    params
+        .balances
+        .free_balances
+        .iter()
+        .map(|balance_info| balance_info.who.clone())
+        .collect::<Vec<_>>()
 }
 
 impl ExtBuilder {
@@ -247,15 +235,13 @@ impl ExtBuilder {
             .build_storage::<Test>()
             .unwrap();
 
-        let _ = GenesisConfig::<Test> {
-            params: {
-                serde_json::from_str(include_str!(
-                    "../../../cli/src/res/genesis_builder_params.json"
-                ))
-                .expect("JSON was not well-formatted")
-            },
-        }
-        .assimilate_storage(&mut storage);
+        let params: xp_genesis_builder::AllParams<AccountId, Balance, Balance, Balance> =
+            serde_json::from_str(include_str!(
+                "../../../cli/src/res/genesis_builder_params.json"
+            ))
+            .expect("JSON was not well-formatted");
+
+        let _ = GenesisConfig::<Test> { params }.assimilate_storage(&mut storage);
 
         let mut ext = sp_io::TestExternalities::from(storage);
         ext.execute_with(|| {
@@ -281,7 +267,7 @@ impl ExtBuilder {
 
 pub type System = frame_system::Module<Test>;
 pub type Balances = pallet_balances::Module<Test>;
-// pub type XAssets = xpallet_assets::Module<Test>;
 pub type Session = pallet_session::Module<Test>;
 pub type Timestamp = pallet_timestamp::Module<Test>;
-pub type XStaking = Module<Test>;
+// pub type XAssets = xpallet_assets::Module<Test>;
+// pub type XStaking = xpallet_mining_staking::Module<Test>;

@@ -38,6 +38,7 @@ serde_json = "1.0"
 chainx-primitives = { path = "../../primitives" }
 xp-mining-common = { path = "../../primitives/mining/common" }
 xp-mining-staking = { path = "../../primitives/mining/staking" }
+xp-genesis-builder = { path = "../../primitives/genesis-builder" }
 xpallet-assets-registrar = { path = "../../xpallets/assets-registrar" }
 xpallet-mining-asset = { path = "../../xpallets/mining/asset" }
 

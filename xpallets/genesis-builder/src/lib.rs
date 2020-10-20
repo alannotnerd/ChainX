@@ -38,8 +38,6 @@ decl_storage! {
 
             let now = std::time::Instant::now();
 
-            println!("{:?}", config.params);
-
             balances::initialize::<T>(&config.params.balances);
             xassets::initialize::<T>(&config.params.xassets);
             xstaking::initialize::<T>(&config.params.xstaking);
@@ -137,7 +135,7 @@ mod genesis {
                 nominators,
             } = params;
 
-            let mut genesis_validators = validators.iter().map(|v| v.who.clone());
+            let genesis_validators = validators.iter().map(|v| v.who.clone()).collect::<Vec<_>>();
 
             // Firstly register the genesis validators.
             xpallet_mining_staking::Module::<T>::initialize_validators(validators)
@@ -157,21 +155,24 @@ mod genesis {
                 {
                     // Not all `nominee` are in `genesis_validators` because the dead
                     // validators in 1.0 have been dropped.
-                    if genesis_validators.any(|ref v| v == nominee) {
-                        // Skip the validator self-bonding as it has already been processed
-                        // in initialize_validators()
-                        if *nominee == *nominator {
-                            continue;
-                        }
-                        xpallet_mining_staking::Module::<T>::force_bond(
-                            nominator,
-                            nominee,
-                            *nomination,
-                        )
-                        .expect("force validator self-bond can not fail; qed");
+                    if genesis_validators.contains(nominee) {
+                        println!(
+                            "setting nominator:{:?}, nominee:{:?}, weight:{:?}",
+                            nominator, nominee, weight
+                        );
                         xpallet_mining_staking::Module::<T>::force_set_nominator_vote_weight(
                             nominator, nominee, *weight,
                         );
+                        // Skip the validator self-bonding as it has already been processed
+                        // in initialize_validators()
+                        if *nominee != *nominator {
+                            xpallet_mining_staking::Module::<T>::force_bond(
+                                nominator,
+                                nominee,
+                                *nomination,
+                            )
+                            .expect("force validator self-bond can not fail; qed");
+                        }
                     }
                 }
             }
