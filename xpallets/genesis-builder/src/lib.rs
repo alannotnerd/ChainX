@@ -38,6 +38,8 @@ decl_storage! {
 
             let now = std::time::Instant::now();
 
+            println!("{:?}", config.params);
+
             balances::initialize::<T>(&config.params.balances);
             xassets::initialize::<T>(&config.params.xassets);
             xstaking::initialize::<T>(&config.params.xstaking);

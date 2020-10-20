@@ -2,6 +2,7 @@
 
 use crate::*;
 use crate::{Module, Trait};
+use chainx_primitives::{AccountId, AccountIndex, AssetId, Balance};
 use frame_support::{
     impl_outer_event, impl_outer_origin, parameter_types, traits::Get, weights::Weight,
 };
@@ -17,26 +18,7 @@ use xpallet_support::traits::TreasuryAccount;
 
 pub const INIT_TIMESTAMP: u64 = 30_000;
 
-pub(crate) type Signature = MultiSignature;
-
-/// The AccountId alias in this test module.
-pub(crate) type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-pub(crate) type AccountIndex = u64;
 pub(crate) type BlockNumber = u64;
-pub(crate) type Balance = u128;
-
-impl_outer_origin! {
-    pub enum Origin for Test {}
-}
-
-mod staking {
-    // Re-export needed for `impl_outer_event!`.
-    pub use super::super::*;
-}
-
-use frame_system as system;
-use pallet_balances as balances;
-use pallet_session as session;
 
 // For testing the pallet, we construct most of a mock runtime. This means
 // first constructing a configuration type (`Test`) which `impl`s each of the
@@ -51,7 +33,11 @@ parameter_types! {
     pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
 
-impl system::Trait for Test {
+impl_outer_origin! {
+    pub enum Origin for Test {}
+}
+
+impl frame_system::Trait for Test {
     type BaseCallFilter = ();
     type Origin = Origin;
     type Call = ();
@@ -129,13 +115,7 @@ impl pallet_session::OneSessionHandler<AccountId> for OtherSessionHandler {
         });
     }
 
-    fn on_disabled(validator_index: usize) {
-        SESSION.with(|d| {
-            let mut d = d.borrow_mut();
-            let value = d.0[validator_index];
-            d.1.insert(value);
-        })
-    }
+    fn on_disabled(validator_index: usize) {}
 }
 
 impl sp_runtime::BoundToRuntimeAppPublic for OtherSessionHandler {
@@ -182,16 +162,6 @@ impl TreasuryAccount<AccountId> for DummyTreasuryAccount {
     }
 }
 
-pub struct DummyStakingRewardPotAccountDeterminer;
-
-impl xp_mining_common::RewardPotAccountFor<AccountId, AccountId>
-    for DummyStakingRewardPotAccountDeterminer
-{
-    fn reward_pot_account_for(validator: &AccountId) -> AccountId {
-        10_000_000 + u64::from(*validator)
-    }
-}
-
 parameter_types! {
     pub const SessionDuration: BlockNumber = 50;
     pub const MigrationSessionOffset: u32 = 500;
@@ -212,6 +182,38 @@ impl xpallet_mining_staking::Trait for Test {
     type DetermineRewardPotAccount = ();
     type WeightInfo = ();
 }
+
+parameter_types! {
+    pub const ChainXAssetId: AssetId = 0;
+}
+
+impl xpallet_assets_registrar::Trait for Test {
+    type Event = ();
+    type NativeAssetId = ChainXAssetId;
+    type RegistrarHandler = ();
+    type WeightInfo = ();
+}
+
+impl xpallet_assets::Trait for Test {
+    type Event = ();
+    type Currency = Balances;
+    type Amount = i128;
+    type TreasuryAccount = ();
+    type OnCreatedAccount = frame_system::CallOnCreatedAccount<Test>;
+    type OnAssetChanged = ();
+    type WeightInfo = ();
+}
+
+impl xpallet_mining_asset::Trait for Test {
+    type StakingInterface = Self;
+    type GatewayInterface = ();
+    type Event = ();
+    type TreasuryAccount = ();
+    type DetermineRewardPotAccount = ();
+    type WeightInfo = ();
+}
+
+impl Trait for Test {}
 
 thread_local! {
     static SESSION: RefCell<(Vec<AccountId>, HashSet<AccountId>)> = RefCell::new(Default::default());
@@ -245,7 +247,15 @@ impl ExtBuilder {
             .build_storage::<Test>()
             .unwrap();
 
-        // let _ = GenesisConfig::<Test> {}.assimilate_storage(&mut storage);
+        let _ = GenesisConfig::<Test> {
+            params: {
+                serde_json::from_str(include_str!(
+                    "../../../cli/src/res/genesis_builder_params.json"
+                ))
+                .expect("JSON was not well-formatted")
+            },
+        }
+        .assimilate_storage(&mut storage);
 
         let mut ext = sp_io::TestExternalities::from(storage);
         ext.execute_with(|| {

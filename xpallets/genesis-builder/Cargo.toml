@@ -32,10 +32,14 @@ xpallet-support = { path = "../support", default-features = false }
 env_logger = "0.7.1"
 sp-core = "2.0.0"
 sp-io = "2.0.0"
-xp-mining-common = { path = "../../primitives/mining/common" }
-xp-mining-staking = { path = "../../primitives/mining/staking" }
 pallet-session = "2.0.0"
 pallet-timestamp = "2.0.0"
+serde_json = "1.0"
+chainx-primitives = { path = "../../primitives" }
+xp-mining-common = { path = "../../primitives/mining/common" }
+xp-mining-staking = { path = "../../primitives/mining/staking" }
+xpallet-assets-registrar = { path = "../../xpallets/assets-registrar" }
+xpallet-mining-asset = { path = "../../xpallets/mining/asset" }
 
 [features]
 default = ["std"]
