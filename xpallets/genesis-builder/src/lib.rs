@@ -156,10 +156,10 @@ mod genesis {
                     // Not all `nominee` are in `genesis_validators` because the dead
                     // validators in 1.0 have been dropped.
                     if genesis_validators.contains(nominee) {
-                        println!(
-                            "setting nominator:{:?}, nominee:{:?}, weight:{:?}",
-                            nominator, nominee, weight
-                        );
+                        // println!(
+                        // "setting nominator:{:?}, nominee:{:?}, weight:{:?}",
+                        // nominator, nominee, weight
+                        // );
                         xpallet_mining_staking::Module::<T>::force_set_nominator_vote_weight(
                             nominator, nominee, *weight,
                         );
@@ -173,6 +173,11 @@ mod genesis {
                             )
                             .expect("force validator self-bond can not fail; qed");
                         }
+                    } else {
+                        println!(
+                            "----------- record of nominee: {:?} has been dropped",
+                            nominee
+                        );
                     }
                 }
             }
