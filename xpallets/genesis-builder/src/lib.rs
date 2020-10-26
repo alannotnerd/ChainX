@@ -18,7 +18,7 @@ use frame_support::{decl_module, decl_storage};
 use xp_genesis_builder::AllParams;
 use xpallet_assets::BalanceOf as AssetBalanceOf;
 use xpallet_mining_staking::BalanceOf as StakingBalanceOf;
-use xpallet_support::info;
+use xpallet_support::{debug, info};
 
 pub trait Trait:
     pallet_balances::Trait + xpallet_mining_asset::Trait + xpallet_mining_staking::Trait
@@ -38,9 +38,16 @@ decl_storage! {
 
             let now = std::time::Instant::now();
 
+            let accounts = &config.params
+        .balances
+        .free_balances
+        .iter()
+        .map(|balance_info| balance_info.who.clone())
+        .collect::<Vec<_>>();
+
             balances::initialize::<T>(&config.params.balances);
             xassets::initialize::<T>(&config.params.xassets);
-            xstaking::initialize::<T>(&config.params.xstaking);
+            xstaking::initialize::<T>(&config.params.xstaking, accounts);
             xmining_asset::initialize::<T>(&config.params.xmining_asset);
 
             info!(
@@ -96,7 +103,9 @@ mod genesis {
 
             let vesting_account = xpallet_mining_staking::Module::<T>::vesting_account();
 
+            let mut total = T::Balance::default();
             for FreeBalanceInfo { who, free } in free_balances {
+                total += *free;
                 if *who == *legacy_council {
                     set_free_balance(&treasury_account, free);
                 } else if *who == *legacy_team {
@@ -108,6 +117,7 @@ mod genesis {
                     set_free_balance(who, free);
                 }
             }
+            println!("--------------- inserted total:{:?}", total);
         }
     }
 
@@ -127,9 +137,16 @@ mod genesis {
 
     pub mod xstaking {
         use crate::{StakingBalanceOf, Trait};
+        use frame_support::storage::{
+            IterableStorageDoubleMap, IterableStorageMap, StorageDoubleMap,
+        };
         use xp_genesis_builder::{Nomination, NominatorInfo, XStakingParams};
+        use xpallet_support::{debug, error, info};
 
-        pub fn initialize<T: Trait>(params: &XStakingParams<T::AccountId, StakingBalanceOf<T>>) {
+        pub fn initialize<T: Trait>(
+            params: &XStakingParams<T::AccountId, StakingBalanceOf<T>>,
+            accounts: &[T::AccountId],
+        ) {
             let XStakingParams {
                 validators,
                 nominators,
@@ -141,6 +158,51 @@ mod genesis {
             xpallet_mining_staking::Module::<T>::initialize_validators(validators)
                 .expect("Failed to initialize genesis staking validators");
 
+            let calc_total_weight = || {
+                let mut total = 0u128;
+                for account in accounts.iter() {
+                    let mut contained = 0u32;
+                    let mut total1 = 0u128;
+                    for validator in genesis_validators.iter() {
+                        if xpallet_mining_staking::Nominations::<T>::contains_key(
+                            account, validator,
+                        ) {
+                            contained += 1;
+                            let ledger =
+                                xpallet_mining_staking::Nominations::<T>::get(account, validator);
+                            total1 += ledger.last_vote_weight;
+                        }
+                    }
+
+                    /*
+                    let mut contained2 = 0u32;
+                    let mut total2 = 0u128;
+                    for (validator, ledger) in
+                        xpallet_mining_staking::Nominations::<T>::iter_prefix(account)
+                    {
+                        contained2 += 1;
+                        total2 += ledger.last_vote_weight;
+                    }
+                    if total1 != total2 {
+                        panic!("total1 != total2");
+                    }
+                    if contained != 0 {
+                        if contained != contained2 {
+                            panic!("----------------- contained != contained2");
+                        }
+                    }
+                    */
+
+                    total += total1;
+                }
+                total
+            };
+
+            let mut total = 0u128;
+            let mut last_total = 0u128;
+
+            // let mut diffs = vec![];
+            let mut last_diff = 0u128;
             // Then mock the validator bond themselves and set the vote weights.
             for NominatorInfo {
                 nominator,
@@ -156,13 +218,55 @@ mod genesis {
                     // Not all `nominee` are in `genesis_validators` because the dead
                     // validators in 1.0 have been dropped.
                     if genesis_validators.contains(nominee) {
-                        // println!(
-                        // "setting nominator:{:?}, nominee:{:?}, weight:{:?}",
-                        // nominator, nominee, weight
-                        // );
+                        /*
+                        let last_calc_total = calc_total_weight();
+                        info!("----------- last_calc_total:{:?}", last_calc_total);
+                        if last_calc_total != total {
+                            error!("last_calc_total:{:?}, total:{:?}", last_calc_total, total);
+                        }
+
+                        info!("total before: {:?}", total);
+                        total += *weight;
+                        info!("total  after: {:?}", total);
+
+                        info!(
+                            "setting nominator:{:?}, nominee:{:?}, weight:{:?}",
+                            nominator, nominee, weight
+                        );
+                        */
+
                         xpallet_mining_staking::Module::<T>::force_set_nominator_vote_weight(
                             nominator, nominee, *weight,
                         );
+
+                        assert!(
+                            xpallet_mining_staking::Nominations::<T>::get(nominator, nominee)
+                                .last_vote_weight
+                                == *weight
+                        );
+
+                        /*
+                        let ledger_in_storage =
+                            xpallet_mining_staking::Nominations::<T>::get(nominator, nominee);
+                        info!("--- inserted: {:?}", ledger_in_storage);
+
+                        let calculated_result = calc_total_weight();
+                        if calculated_result != total {
+                            let new_diff = total - calculated_result;
+                            if new_diff != last_diff {
+                                diffs.push((nominator.clone(), nominee.clone(), ledger_in_storage));
+                                last_diff = new_diff;
+                            }
+                            error!(
+                                "calc_total_weight:{:?}, total: {:?}, diff: {:?}",
+                                calculated_result,
+                                total,
+                                total - calculated_result
+                            );
+                            // panic!("total weight incorrect");
+                        }
+                        */
+
                         // Skip the validator self-bonding as it has already been processed
                         // in initialize_validators()
                         if *nominee != *nominator {
@@ -173,14 +277,39 @@ mod genesis {
                             )
                             .expect("force validator self-bond can not fail; qed");
                         }
-                    } else {
-                        println!(
-                            "----------- record of nominee: {:?} has been dropped",
-                            nominee
-                        );
                     }
                 }
             }
+            /*
+            info!("diffs:{:#?}", diffs);
+
+            for (nominator, nominee, ledger) in diffs {
+                info!(
+                    "setting again nominator:{:?}, nominee:{:?}, ledger:{:?}",
+                    nominator, nominee, ledger
+                );
+
+                info!(
+                    "in storage: {:?}",
+                    xpallet_mining_staking::Nominations::<T>::get(&nominator, &nominee)
+                        .last_vote_weight
+                );
+                xpallet_mining_staking::Module::<T>::force_set_nominator_vote_weight(
+                    &nominator,
+                    &nominee,
+                    ledger.last_vote_weight,
+                );
+
+                let last_calc_total = calc_total_weight();
+                info!("----------- last_calc_total:{:?}", last_calc_total);
+                if last_calc_total != total {
+                    error!(
+                        "again last_calc_total:{:?}, total:{:?}",
+                        last_calc_total, total
+                    );
+                }
+            }
+            */
         }
     }
 

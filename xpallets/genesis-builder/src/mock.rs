@@ -228,6 +228,21 @@ pub(crate) fn get_accounts() -> Vec<AccountId> {
         .collect::<Vec<_>>()
 }
 
+pub(crate) fn get_accounts_info() -> std::collections::BTreeMap<AccountId, Balance> {
+    let params: xp_genesis_builder::AllParams<AccountId, Balance, Balance, Balance> =
+        serde_json::from_str(include_str!(
+            "../../../cli/src/res/genesis_builder_params.json"
+        ))
+        .expect("JSON was not well-formatted");
+
+    params
+        .balances
+        .free_balances
+        .iter()
+        .map(|balance_info| (balance_info.who.clone(), balance_info.free))
+        .collect()
+}
+
 impl ExtBuilder {
     pub fn build(self) -> sp_io::TestExternalities {
         let _ = env_logger::try_init();

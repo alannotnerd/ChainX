@@ -29,6 +29,55 @@ fn test_validator_total_nomination() {
 }
 
 #[test]
+fn test_balances() {
+    ExtBuilder::default().build_and_execute(|| {
+        let accounts_info = crate::mock::get_accounts_info();
+        println!("----------- origin account count:{:?}", accounts_info.len());
+        let mut total_issuance = 0u128;
+        let mut account_cnt = 0u64;
+        let mut storage_accounts_info = std::collections::BTreeMap::new();
+        for (who, account_info) in frame_system::Account::<Test>::iter() {
+            account_cnt += 1;
+            let total = account_info.data.free + account_info.data.reserved;
+            storage_accounts_info.insert(who.clone(), total);
+            if let Some(expected_total) = accounts_info.get(&who) {
+                if total != *expected_total {
+                    println!(
+                        "ERROR ======= who:{:?}, total:{:?}, expected_total:{:?}",
+                        who, total, expected_total
+                    );
+                }
+            } else {
+                println!(
+                    "ERROR {:?} does not exist in accounts info :{:?}",
+                    who, account_info
+                );
+            }
+            total_issuance += total;
+        }
+        println!(
+            "account_cnt:{:?}, total_issuance: {:?}",
+            account_cnt, total_issuance
+        );
+        let mut missed = 0u128;
+        for (who, total) in accounts_info {
+            if let Some(storage_info) = storage_accounts_info.get(&who) {
+                if total != *storage_info {
+                    println!("ERROR ===== who:{:?}, total {:?} != storage_info {:?}", who, total, storage_info);
+                }
+            } else {
+                    missed += total;
+                println!(
+                    "ERROR ================ who:{:?}, param info: {:?}, storage_info does not exist",
+                    who, total
+                );
+            }
+        }
+        println!("======== missed:{:?}", missed);
+    });
+}
+
+#[test]
 fn test_genesis_state() {
     ExtBuilder::default().build_and_execute(|| {
         let accounts = crate::mock::get_accounts();
