@@ -117,9 +117,9 @@ macro_rules! endowed_gen {
 }
 
 macro_rules! bootnodes {
-    ( $( $bootnode:expr, )+ ) => {
+    ( $( $bootnode:expr, )* ) => {
         vec![
-            $($bootnode.to_string().try_into().expect("The bootnode is invalid"),)+
+            $($bootnode.to_string().try_into().expect("The bootnode is invalid"),)*
         ]
     }
 }
@@ -147,7 +147,7 @@ pub fn development_config() -> Result<ChainSpec, String> {
             vec![authority_keys_from_seed("Alice")],
             get_account_id_from_seed::<sr25519::Public>("Alice"),
             get_account_id_from_seed::<sr25519::Public>("vesting"),
-            testnet_assets(),
+            genesis_assets(),
             endowed_gen![
                 ("Alice", endowed_balance),
                 ("Bob", endowed_balance),
@@ -184,7 +184,7 @@ pub fn benchmarks_config() -> Result<ChainSpec, String> {
             vec![authority_keys_from_seed("Alice")],
             get_account_id_from_seed::<sr25519::Public>("Alice"),
             get_account_id_from_seed::<sr25519::Public>("vesting"),
-            testnet_assets(),
+            genesis_assets(),
             endowed_gen![
                 ("Alice", endowed_balance),
                 ("Bob", endowed_balance),
@@ -224,7 +224,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             ],
             get_account_id_from_seed::<sr25519::Public>("Alice"),
             get_account_id_from_seed::<sr25519::Public>("vesting"),
-            testnet_assets(),
+            genesis_assets(),
             endowed_gen![
                 ("Alice", endowed_balance),
                 ("Bob", endowed_balance),
@@ -363,7 +363,7 @@ pub fn staging_testnet_config() -> Result<ChainSpec, String> {
         ),
     ];
 
-    let assets = testnet_assets();
+    let assets = genesis_assets();
     let endowed_balance = 50 * DOLLARS;
     let mut endowed = BTreeMap::new();
     let pcx_id = pcx().0;
@@ -508,7 +508,7 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
         ),
     ];
 
-    let assets = testnet_assets();
+    let assets = genesis_assets();
     let endowed_balance = 50 * DOLLARS;
     let mut endowed = BTreeMap::new();
     let pcx_id = pcx().0;
@@ -555,6 +555,114 @@ pub fn testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
+pub fn mainnet_config() -> Result<ChainSpec, String> {
+    let wasm_binary = include_bytes!("./wasm/chainx_runtime_testnet.compact.wasm");
+    // subkey inspect-key --uri "$SECRET"
+    // 5DevKrCXVnGtJ5epm19VCQwdbjXVGLvDVVe86b67sRweMh8P
+    let root_key: AccountId =
+        hex!["2e28aae595dc6693c6435550bc7e7bda550a5d76699eeb3eed68bdc61155da54"].into();
+
+    let initial_authorities: Vec<AuthorityKeysTuple> = vec![
+        (
+            (
+                // 5ELtsuPYE8UqJnJeRCwyjWydpsvA7vUkUCaLNZFAb1FpLwWx
+                hex!["64d17e8f4a14ea46f09ccee44bdc17a1a942c57b458ae77dd0c13de9c893916c"].into(),
+                b"Validator1".to_vec(),
+            ),
+            // 5EsjzUQpgHYNnRarLgBTxfeJoqLaixqpdL381zZoG1bYLA3i
+            hex!["7c582fbde19826d9fe6771d3e8893e158f3b9b7bc68266c18859ecebbb02546d"].into(),
+            // 5FFBQ3dNqKcZB6v5T4HU8VdNQKtXNpNBdCjbzypM4MMCsf5U
+            hex!["8cb1dd9a4f9d98a7de54eee05fa537e54cf26227efed81f4dc588121e39a8449"]
+                .unchecked_into(),
+            // 5FyDiZGUCANLwRBhJFR1d5su4cnPJrbCY2ocqiZ28Aot4Bgd
+            hex!["acc1fac697f4ddabcb146ec32b4e72bfa0c30b058061b643941254992a11693a"]
+                .unchecked_into(),
+            // 5Ek3SnW44hcaCktc6Xeg32yKuGqNPq2MkodwipWmAnzps3Gr
+            hex!["7678fa3cdb95881bc7d780cc139d300ed274fc0269956d00ed5e86f7aac4670d"]
+                .unchecked_into(),
+            // 5FUC1Y93Z45RriJ2d5rqGnDDwQhLdeZcMwjJBDg5sHbzd59o
+            hex!["969e1da5d315fde137384c2e84882fd43672464ceec4985e90419f2c6ea3831d"]
+                .unchecked_into(),
+        ),
+        (
+            (
+                // 5CUeoTqhQwSexLnymivFqMMKS9BZrJvZy4bmUX9y1KXkxTfj
+                hex!["12439ad2a59a816960181d4c7603e611db91f7f3a3e630db695cd2c0904e9f21"].into(),
+                b"Validator2".to_vec(),
+            ),
+            // 5FUF1PoLc3PZyEuvW3cSEk2kpA31a1jQ9v8cBrXT62UAg4nM
+            hex!["96a834d46beecae180742fc5fa32ecc0299020cb659861d6de8b7def88463d6b"].into(),
+            // 5ELPqMqPJjVdhSxpDTzdh6R8rhjaTJAVDvsQjRsvAv6ziQHs
+            hex!["646fb95924d6b120706b2f1088a27a8d2f0574a0b72aa71c8afdc1f02beec967"]
+                .unchecked_into(),
+            // 5Dy9Kekw7VxRn9ARBkFdRjCwh72axet7vLVxeHj67fPDyQEy
+            hex!["543ab7d35df1dfbdfb1aad19b6f28252af69b4bea35812a9a0284ef5f9ac6045"]
+                .unchecked_into(),
+            // 5EXPnpKotj3rdZKj6sGnibGB8MbEFP9Js58gBc8Y4nEuoJRg
+            hex!["6cd3469e588d393e62d80f1da644ea8306aa4c12312784160398e831e508383f"]
+                .unchecked_into(),
+            // 5G1dzbkKR8UZdFs3QDiUuBjCx226G5jMn6fNSK3kS1BQsD2u
+            hex!["ae9a3156139c7ef4ec670a3a2aae99eb573f9dbdc7ace42ff0957e6a2ff76116"]
+                .unchecked_into(),
+        ),
+        (
+            (
+                // 5Fn4QxWJUGWg4eAFLcsFDrp1hy9c3hgF4iLUraeziMm5ky3i
+                hex!["a43ef644a128e5e2873f92e42fb7496e6cbc3226def512987359a238e8cdcd24"].into(),
+                b"Validator3".to_vec(),
+            ),
+            // 5GbvfqG7kF5sWDuLAgMUx3VTPwgdptz17UDg1qYMMLTeTJWG
+            hex!["c8c0aca1778c0d755196b8880e44a0034b838f1a2fd65e071392cae9a0fd447b"].into(),
+            // 5E2YuMTsu6sqrZr7sGDh9YQNr1yFQqgHCHQc7Y9aN5q2faNX
+            hex!["56d3d5d1627553ff0a3373b65e4f80ff7fa146dff2b06dd9b8c52c92136d6978"]
+                .unchecked_into(),
+            // 5Hg73sts3GrCGxrzrV8Yn5fEHsT7Y1D6ecLRCZb5D4Ydv3so
+            hex!["f82cd4f89024addf0f0166beae093abb2360f7f6ece073b80e83cdeca20f744a"]
+                .unchecked_into(),
+            // 5CtTvJpVWtQqK95Xa9BjWpUowaXVVfWpUJKq7BA6KCCzCUqP
+            hex!["246cdcc84adc1b9e3db8c9797901c9575b04d89d7e9315ebe33f6f8d5e1fe043"]
+                .unchecked_into(),
+            // 5C8TVT4v7mp4RxUeVsL4vFHZ7pwScAmFZxwgqYXZm1m2DTfq
+            hex!["02dc9f34fbf5891f13877cf7bed6f8c634329601addcd7554ed36d80002f676c"]
+                .unchecked_into(),
+        ),
+    ];
+
+    let constructor = move || {
+        build_genesis(
+            &wasm_binary[..],
+            initial_authorities.clone(),
+            root_key.clone(),
+            root_key.clone(), // use root key as vesting_account
+            genesis_assets(),
+            Default::default(),
+            crate::genesis::bitcoin::btc_genesis_params(include_str!(
+                "res/btc_genesis_params_mainnet.json"
+            )),
+            crate::genesis::bitcoin::staging_testnet_trustees(), // TODO: BTC genesis
+        )
+    };
+
+    Ok(ChainSpec::from_genesis(
+        "ChainX",
+        "chainx",
+        ChainType::Live,
+        constructor,
+        bootnodes![
+            "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWNPSrgSB8kkBVv8ne3GErnKqSRuGtZFkNtWDeQZwjDbV5",
+            "/ip4/127.0.0.1/tcp/30334/p2p/12D3KooWGcNdWCgjbGwau5A5CYqdxssz5c2j92iVmQV5KMymcnjR",
+            "/ip4/127.0.0.1/tcp/30335/p2p/12D3KooWRnE1EmDurZ35RA2i9UuYtz4revwKcgXJvBk78Ys4FKso",
+        ],
+        Some(
+            TelemetryEndpoints::new(vec![(CHAINX_TELEMETRY_URL.to_string(), 0)])
+                .expect("ChainX telemetry url is valid; qed"),
+        ),
+        Some("pcx0"),
+        Some(as_properties(NetworkType::Mainnet)),
+        Default::default(),
+    ))
+}
+
 fn pcx() -> (AssetId, AssetInfo, AssetRestrictions) {
     (
         PCX,
@@ -589,7 +697,7 @@ fn xbtc() -> (AssetId, AssetInfo, AssetRestrictions) {
 }
 
 // asset_id, asset_info, asset_restrictions, is_online, has_mining_rights
-fn testnet_assets() -> Vec<(AssetId, AssetInfo, AssetRestrictions, bool, bool)> {
+fn genesis_assets() -> Vec<(AssetId, AssetInfo, AssetRestrictions, bool, bool)> {
     let pcx = pcx();
     let btc = xbtc();
     let assets = vec![
@@ -641,26 +749,26 @@ fn build_genesis(
 ) -> GenesisConfig {
     const ENDOWMENT: Balance = 10_000_000 * DOLLARS;
     const STASH: Balance = 100 * DOLLARS;
-    const STAKING_LOCKED: Balance = 1_000 * DOLLARS;
+    const STAKING_LOCKED: Balance = 0;
     let (assets, assets_restrictions) = init_assets(assets);
 
-    let endowed_accounts = endowed
-        .get(&PCX)
-        .expect("PCX endowed; qed")
-        .iter()
-        .cloned()
-        .map(|(k, _)| k)
-        .collect::<Vec<_>>();
+    let endowed_accounts = if let Some(endowed) = endowed.get(&PCX) {
+        endowed.iter().cloned().map(|(k, _)| k).collect::<Vec<_>>()
+    } else {
+        vec![]
+    };
 
     let num_endowed_accounts = endowed_accounts.len();
 
-    let balances = endowed
-        .get(&PCX)
-        .expect("PCX endowed; qed")
-        .iter()
-        .cloned()
-        .map(|(k, _)| (k, ENDOWMENT))
-        .collect::<Vec<_>>();
+    let balances = if let Some(endowed) = endowed.get(&PCX) {
+        endowed
+            .iter()
+            .cloned()
+            .map(|(k, _)| (k, ENDOWMENT))
+            .collect::<Vec<_>>()
+    } else {
+        vec![]
+    };
 
     // The value of STASH balance will be reserved per phragmen member.
     let phragmen_members = endowed_accounts
