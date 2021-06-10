@@ -34,7 +34,8 @@ jobs:
           pwd
           scripts/ci/dump_spec_version.py
           ls -la
-          cargo build --json | tee srtool_output.json
+          which build
+          build --json | tee srtool_output.json
           scripts/ci/generate_release_note.py | tee release_note.md
 
       - name: Upload release note
