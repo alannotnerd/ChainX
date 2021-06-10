@@ -29,7 +29,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          apt install -y python3
+          apt update && apt install -y python3
           cd /build
           pwd
           scripts/ci/dump_spec_version.py
