@@ -2,8 +2,8 @@
 
 if __name__ == '__main__':
     import json
-    env = json.load(open('srtool_output.json'))
-    spec_version = json.load(open('spec_version.json'))
+    env = json.load(open('srtool_output.json', 'rb'))
+    spec_version = json.load(open('spec_version.json', 'rb'))
     message = f"""
 Upgrade priority:
 

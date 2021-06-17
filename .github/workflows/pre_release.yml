@@ -34,6 +34,7 @@ jobs:
           mv /build/rust-toolchain /build/rust-toolchain.bak
           scripts/ci/dump_spec_version.py
           build --json | tee srtool_output.json
+          cat srtool_output.json
           scripts/ci/generate_release_note.py | tee release_note.md
           mv /build/rust-toolchain.bak /build/rust-toolchain
 
