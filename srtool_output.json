@@ -1,0 +1,16 @@
+{
+  "gen": "srtool v0.9.11",
+  "src": "git",
+  "version": "2.0.9",
+  "commit": "7ab82887953b3c0fddd4f1bf82fd2e124b415f9f",
+  "tag": "v2.14",
+  "branch": "develop",
+  "tmsp": "2021-06-17T05:07:16Z",
+  "rustc": "rustc 1.52.1 (9bc8c42bb 2021-05-09)",
+  "size": "2355769",
+  "pkg": "chainx-runtime",
+  "prop": "0x624895cfba01bf8df6f67d5c44485e5518910cdd56b6918ef60dc87f08b6a05d",
+  "ipfs": "Qma4kv5DH3yo6XSG7k6Kvn3Qr2yHUraWJMjJceftbvzj7x",
+  "sha256": "0xe289069eab8535f9f84876bdb600ae53a545812bfb6ef920278c2e2d3d9ac022",
+  "wasm": "runtime/chainx/target/srtool/release/wbuild/chainx-runtime/chainx_runtime.compact.wasm"
+}
