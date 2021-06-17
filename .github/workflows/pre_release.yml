@@ -23,8 +23,8 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup Python
-      - shell: bash
-      - run: |
+        shell: bash
+        run: |
         apt update && apt install python3
 
       - name: Build
