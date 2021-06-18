@@ -35,7 +35,6 @@ jobs:
           build --json | tee srtool_output.json
           scripts/ci/generate_release_note.py | tee release_note.md
           mv /build/rust-toolchain.bak /build/rust-toolchain
-          ls -R /build/target/release/wbuild/chainx_runtime
 
       - name: Upload release note
         uses: actions/upload-artifact@v2
