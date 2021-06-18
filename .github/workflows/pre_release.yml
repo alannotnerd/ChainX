@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: chainx_runtime.compact.wasm
-          path: /runtime/chainx/target/srtool/release/wbuild/chainx-runtime/chainx_runtime.compact.wasm
+          path: runtime/chainx/target/srtool/release/wbuild/chainx-runtime/chainx_runtime.compact.wasm
 
   release:
     name: Create Pre-release
